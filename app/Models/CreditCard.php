@@ -8,15 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 class CreditCard extends Model
 {
     use HasFactory;
-    protected $visible = ['id',
-    'fee_value',
-    'max_fee',
-    'monthly_interest',
-    'effective_annualInterest',
-    'image_url',
-    'created_at',
-    'updated_at'];
-
     protected $fillable = [
         'id',
         'type',
@@ -40,7 +31,7 @@ class CreditCard extends Model
 
         return $transformedData;
     }
-    public function setType($value)
+    public function setType($value): void
     {
         $this->attributes['type'] = $value;
     }
@@ -98,5 +89,15 @@ class CreditCard extends Model
     public function getImageUrl()
     {
         return $this->attributes['image_url'];
+    }
+
+    public function setId($id): void
+    {
+        $this->attributes['id'] = $id;
+    }
+
+    public function getId()
+    {
+        return $this->attributes['id'];
     }
 }

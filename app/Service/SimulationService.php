@@ -25,7 +25,7 @@ class SimulationService
             'credit_card_id' => $creditCardId,
         ]);
 
-        $simulation->products()->sync($products);
+        $simulation->products()->attach($products);
 
         return $simulation;
     }
@@ -42,7 +42,7 @@ class SimulationService
             $simulation->update($data);
 
             if (!empty($products)) {
-                $simulation->products()->sync($products);
+                $simulation->products()->attach($products);
             } else {
                 $simulation->products()->detach();
             }

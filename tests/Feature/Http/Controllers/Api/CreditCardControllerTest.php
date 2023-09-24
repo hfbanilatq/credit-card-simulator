@@ -19,7 +19,7 @@ class CreditCardControllerTest extends TestCase
         CreditCard::factory()->count(2)->create();
     }
 
-    public function testListCreditCards()
+    public function testListCreditCards(): void
     {
         $response = $this->get('/api/credit-cards');
 
@@ -27,7 +27,7 @@ class CreditCardControllerTest extends TestCase
         $response->assertJsonCount(2);
     }
 
-    public function testShowCreditCard()
+    public function testShowCreditCard(): void
     {
         $creditCard = CreditCard::first(); // Obtén el primer producto de la base de datos
 
