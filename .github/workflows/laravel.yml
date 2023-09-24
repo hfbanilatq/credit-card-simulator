@@ -1,7 +1,7 @@
 name: Laravel Tests
 
 on:
-  push:
+  pull_request:
     branches:
       - master
 
@@ -19,7 +19,9 @@ jobs:
           php-version: 8.0
 
       - name: Install Dependencies
-        run: composer install
+        run: |
+          composer install
+          composer update
 
       - name: Create .env file
         run: cp .env.example .env
