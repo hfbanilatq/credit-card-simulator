@@ -33,12 +33,12 @@ class Simulation extends Model
 
     public function setProducts($productIds): void
     {
-        $this->products()->sync($productIds);
+        $this->products()->attach($productIds);
     }
 
     public function setCreditCard($id): void
     {
-        $this->creditCard()->sync($id);
+        $this->creditCard()->associate($id);
     }
 
     public function products()
@@ -73,7 +73,7 @@ class Simulation extends Model
 
     public function getProducts()
     {
-        return $this->products;
+        return $this->products()->get();
     }
 
 }

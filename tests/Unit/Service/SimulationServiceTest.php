@@ -43,7 +43,7 @@ class SimulationServiceTest extends TestCase
     /**
      * A basic unit test example.
      */
-    public function testCreateSimulation()
+    public function testCreateSimulation(): void
     {
 
         $this->simulation->shouldReceive('create')->andReturnSelf();
@@ -71,7 +71,7 @@ class SimulationServiceTest extends TestCase
         $this->assertSame($this->simulation, $result);
     }
 
-    public function testUpdateSimulation()
+    public function testUpdateSimulation(): void
     {
         $this->simulation->shouldReceive('find')->with(1)->andReturn($this->simulation);
         $this->simulation->shouldReceive('update')->andReturnSelf();
@@ -101,7 +101,7 @@ class SimulationServiceTest extends TestCase
         $this->assertSame($this->simulation, $result);
     }
 
-    public function testUpdateSimulationWithNoProducts()
+    public function testUpdateSimulationWithNoProducts(): void
     {
 
         $this->simulation->shouldReceive('find')->with(1)->andReturn($this->simulation);
@@ -131,7 +131,7 @@ class SimulationServiceTest extends TestCase
         $this->assertSame($this->simulation, $result);
     }
 
-    public function testDeleteSimulation()
+    public function testDeleteSimulation(): void
     {
         $this->simulation->shouldReceive('find')->with(1)->andReturn($this->simulation);
         $this->simulation->shouldReceive('delete')->once()->andReturn(true);
@@ -145,7 +145,7 @@ class SimulationServiceTest extends TestCase
         $this->assertTrue($result);
     }
 
-    public function testDeleteSimulationNotFound()
+    public function testDeleteSimulationNotFound(): void
     {
         $discountCalculator = Mockery::mock(DiscountCalculator::class);
         $discountCalculator->shouldReceive('calculatePriceWithDiscount')->andReturn(100);
@@ -161,7 +161,7 @@ class SimulationServiceTest extends TestCase
         $this->assertFalse($result);
     }
 
-    public function testGetById()
+    public function testGetById(): void
     {
         $this->simulation->shouldReceive('find')->with(1)->andReturn($this->simulation);
 
@@ -171,7 +171,7 @@ class SimulationServiceTest extends TestCase
         $this->assertSame($this->simulation, $result);
     }
 
-    public function testGetAll()
+    public function testGetAll(): void
     {
         $simulations = [
             Mockery::mock(Simulation::class),

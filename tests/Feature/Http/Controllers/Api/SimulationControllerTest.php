@@ -6,7 +6,6 @@ use App\Models\CreditCard;
 use App\Models\Product;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class SimulationControllerTest extends TestCase
@@ -14,19 +13,22 @@ class SimulationControllerTest extends TestCase
     use RefreshDatabase;
     use DatabaseMigrations;
 
-    public function testSimulate()
+    public function testSimulate(): void
     {
-        // Crea dos productos y una tarjeta de crédito en tu base de datos
+        /** @var CreditCard $creditCard */
         $creditCard = CreditCard::factory()->create();
+        /** @var Product $product1 */
         $product1 = Product::factory()->create();
+
+        /** @var Product $product2 */
         $product2 = Product::factory()->create();
 
         $simulationData = [
-            'creditCardId' => $creditCard->id,
+            'creditCardId' => $creditCard->getId(),
             'numberOfInstallments' => 12,
             'products' => [
-                $product1->id,
-                $product2->id,
+                $product1->getId(),
+                $product2->getId(),
             ],
         ];
 

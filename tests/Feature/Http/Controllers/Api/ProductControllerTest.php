@@ -20,7 +20,7 @@ class ProductControllerTest extends TestCase
         Product::factory()->count(2)->create();
     }
 
-    public function testListProducts()
+    public function testListProducts(): void
     {
         $response = $this->get('/api/products');
 
@@ -28,7 +28,7 @@ class ProductControllerTest extends TestCase
         $response->assertJsonCount(2);
     }
 
-    public function testStoreProduct()
+    public function testStoreProduct(): void
     {
         $productData = [
             'reference' => 'ABC123',
