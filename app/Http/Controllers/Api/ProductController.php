@@ -50,6 +50,7 @@ class ProductController extends Controller
     public function update(Request $request, $id)
     {
         $data = $request->json()->all();
+
         $product = $this->productService->update(
             $id,
             $data['reference'],
