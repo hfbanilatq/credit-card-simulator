@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\CreditCardController;
+use App\Http\Controllers\Api\ProductController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\SimulationController;
@@ -19,25 +21,26 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 Route::prefix('simulations')->group(function () {
-    Route::get('/', 'SimulationController@list'); // Listar todas las simulaciones
-    Route::get('/{id}', 'SimulationController@show'); // Mostrar una simulación por ID
-    Route::post('/', 'SimulationController@store'); // Crear una nueva simulación
-    Route::put('/{id}', 'SimulationController@update'); // Actualizar una simulación por ID
-    Route::delete('/{id}', 'SimulationController@destroy'); // Eliminar una simulación por ID
+    Route::get('/', [SimulationController::class, 'list']); // Listar todas las simulaciones
+    Route::get('/{id}', [SimulationController::class, 'show']); // Mostrar una simulación por ID
+    Route::post('/', [SimulationController::class, 'store']); // Crear una nueva simulación
+    Route::put('/{id}', [SimulationController::class, 'update']); // Actualizar una simulación por ID
+    Route::delete('/{id}', [SimulationController::class, 'destroy']);
+    Route::post('/simulate', [SimulationController::class, 'simulate']);
 });
 
 Route::prefix('credit-cards')->group(function () {
-    Route::get('/', 'CreditCardController@list'); // Listar todas las tarjetas de crédito
-    Route::get('/{id}', 'CreditCardController@show'); // Mostrar una tarjeta de crédito por ID
-    Route::post('/', 'CreditCardController@store'); // Crear una nueva tarjeta de crédito
-    Route::put('/{id}', 'CreditCardController@update'); // Actualizar una tarjeta de crédito por ID
-    Route::delete('/{id}', 'CreditCardController@destroy'); // Eliminar una tarjeta de crédito por ID
+    Route::get('/', [CreditCardController::class, 'list']); // Listar todas las tarjetas de crédito
+    Route::get('/{id}', [CreditCardController::class, 'show']); // Mostrar una tarjeta de crédito por ID
+    Route::post('/', [CreditCardController::class, 'store']); // Crear una nueva tarjeta de crédito
+    Route::put('/{id}', [CreditCardController::class, 'update']); // Actualizar una tarjeta de crédito por ID
+    Route::delete('/{id}', [CreditCardController::class, 'delete']); // Eliminar una tarjeta de crédito por ID
 });
 
 Route::prefix('products')->group(function () {
-    Route::get('/', 'ProductController@list'); // Listar todos los productos
-    Route::get('/{id}', 'ProductController@show'); // Mostrar un producto por ID
-    Route::post('/', 'ProductController@store'); // Crear un nuevo producto
-    Route::put('/{id}', 'ProductController@update'); // Actualizar un producto por ID
-    Route::delete('/{id}', 'ProductController@destroy'); // Eliminar un producto por ID
+    Route::get('/', [ProductController::class,'list']); // Listar todos los productos
+    Route::get('/{id}', [ProductController::class,'show']); // Mostrar un producto por ID
+    Route::post('/', [ProductController::class,'store']); // Crear un nuevo producto
+    Route::put('/{id}', [ProductController::class,'update']); // Actualizar un producto por ID
+    Route::delete('/{id}', [ProductController::class,'destroy']); // Eliminar un producto por ID
 });

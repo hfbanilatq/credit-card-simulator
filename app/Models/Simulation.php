@@ -17,6 +17,20 @@ class Simulation extends Model
         return $this->belongsTo(CreditCard::class, 'credit_card_id');
     }
 
+    public function toArray(): array
+    {
+        $data = parent::toArray();
+
+        $transformedData = [];
+
+        foreach ($data as $key => $value) {
+            $camelCaseKey = lcfirst(str_replace('_', '', ucwords($key, '_')));
+            $transformedData[$camelCaseKey] = $value;
+        }
+
+        return $transformedData;
+    }
+
     public function setProducts($productIds): void
     {
         $this->products()->sync($productIds);
@@ -29,7 +43,7 @@ class Simulation extends Model
 
     public function products()
     {
-        return $this->belongsToMany(Product::class);
+        return $this->belongsToMany(Product::class, 'product_has_simulation');
     }
 
     public function setNumberOfInstallments($numberOfInstallments): void

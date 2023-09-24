@@ -17,6 +17,19 @@ class Product extends Model
         'discount',
         'discount_with_credit_card',
     ];
+    public function toArray(): array
+    {
+        $data = parent::toArray();
+
+        $transformedData = [];
+
+        foreach ($data as $key => $value) {
+            $camelCaseKey = lcfirst(str_replace('_', '', ucwords($key, '_')));
+            $transformedData[$camelCaseKey] = $value;
+        }
+
+        return $transformedData;
+    }
 
     public function setId($id): void
     {

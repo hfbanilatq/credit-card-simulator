@@ -14,17 +14,34 @@ class ProductController extends Controller
     {
         $this->productService = $productService;
     }
+
+    public function list()
+    {
+        $simulations = $this->productService->getAll();
+        return response()->json($simulations);
+    }
+
+    public function show($id)
+    {
+        $simulation = $this->productService->getById($id);
+
+        if (!$simulation) {
+            return response()->json(['message' => 'Simulation not found'], 404);
+        }
+
+        return response()->json($simulation);
+    }
     public function store(Request $request)
     {
         $data = $request->json()->all();
         $product = $this->productService->create(
             $data['reference'],
-            $data['image_url'],
+            $data['imageUrl'],
             $data['description'],
             $data['price'],
             $data['warehouse'],
             $data['discount'],
-            $data['discount_with_credit_card']
+            $data['discountWithCreditCard']
         );
 
         return response()->json($product, 201);

@@ -2,11 +2,9 @@
 
 namespace Tests\Feature\Http\Controllers\Api;
 
-use App\Http\Controllers\Api\CreditCardController;
-use App\Models\Product;
+use App\Models\CreditCard;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class CreditCardControllerTest extends TestCase
@@ -18,16 +16,28 @@ class CreditCardControllerTest extends TestCase
     {
         parent::setUp();
 
-        // Crear datos de prueba utilizando factories
-        factory(CreditCardController::class, 5)->create();
+        CreditCard::factory()->count(2)->create();
     }
 
-    public function testListProducts()
+    public function testListCreditCards()
     {
-        $response = $this->get('/api/products');
+        $response = $this->get('/api/credit-cards');
 
         $response->assertStatus(200);
-        $response->assertJsonCount(5);
+        $response->assertJsonCount(2);
+    }
+
+    public function testShowCreditCard()
+    {
+        $creditCard = CreditCard::first(); // Obtén el primer producto de la base de datos
+
+        $response = $this->get('/api/credit-cards/' . $creditCard->id);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'id' => $creditCard->id,
+            'maxFee' => $creditCard->max_fee,
+        ]);
     }
 
 }

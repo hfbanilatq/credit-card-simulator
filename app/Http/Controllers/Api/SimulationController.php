@@ -70,5 +70,22 @@ class SimulationController extends Controller
 
         return response()->json(['message' => 'Simulation deleted']);
     }
+
+    public function simulate(Request $request)
+    {
+        $data = $request->json()->all();
+        $creditCardId = $data['creditCardId'];
+        $products = $data['products'];
+        $numberOfInstallments = $data['numberOfInstallments'];
+
+        $simulationSaved = $this->simulationService->create(
+             $numberOfInstallments,
+             $creditCardId,
+             $products,
+        );
+        $simulationResult =  $this->simulationService->simulate($simulationSaved);
+
+        return response()->json($simulationResult);
+    }
 }
 

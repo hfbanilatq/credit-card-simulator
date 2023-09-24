@@ -23,4 +23,3 @@ class ProductFactory extends Factory
     }
 }
 
-Product::factory()->count(8)->create();

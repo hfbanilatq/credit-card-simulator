@@ -12,11 +12,12 @@ class CreditCardFactory extends Factory
     public function definition()
     {
         return [
-            'name' => $this->faker->creditCardType,
-            'monthly_interest' => $this->faker->randomFloat(2, 1, 5),
-            'fee_value' => $this->faker->randomFloat(2, 0, 10),
+            'type' => $this->faker->word,
+            'fee_value' => $this->faker->randomFloat(2, 0, 100),
+            'max_fee' => $this->faker->numberBetween(1, 12),
+            'monthly_interest' => $this->faker->randomFloat(2, 0, 20),
+            'effective_annual_interest' => $this->faker->randomFloat(2, 0, 20),
+            'image_url' => $this->faker->imageUrl(),
         ];
     }
 }
-
-CreditCard::factory()->count(4)->create();

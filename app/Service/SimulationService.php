@@ -73,7 +73,7 @@ class SimulationService
         return $this->simulation->all();
     }
 
-    public function simulate($simulation)
+    public function simulate(Simulation $simulation): array
     {
         $realPrice = 0;
         $promotionPrice = 0;
