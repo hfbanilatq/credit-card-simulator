@@ -85,6 +85,7 @@ class SimulationController extends Controller
         );
         $simulationResult =  $this->simulationService->simulate($simulationSaved);
 
+        // Devuelve la respuesta JSON con los resultados de la simulación
         return response()->json($simulationResult);
     }
 }

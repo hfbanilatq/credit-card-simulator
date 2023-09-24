@@ -2,9 +2,9 @@
 
 use App\Http\Controllers\Api\CreditCardController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\SimulationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\API\SimulationController;
 
 /*
 |--------------------------------------------------------------------------
