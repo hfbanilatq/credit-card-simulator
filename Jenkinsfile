@@ -1,42 +1,37 @@
 pipeline {
     agent any
-    
+
     environment {
-        ECR_REGISTRY = 'tu-ecr-url.dkr.ecr.tu-region.amazonaws.com'
-        ECR_REPO = 'tu-repositorio-ecr'
-        TAG = "${env.BUILD_NUMBER}" // Cambia el tag en cada construcción
+        // Variables de entorno
+        ECR_REGISTRY = '309682544380.dkr.ecr.us-east-1.amazonaws.com'
+        ECR_REPO = 'credit-card-simulator'
+        K8S_MANIFESTS_DIR = './Manifiesto.yml'
+        DOCKERFILE_PATH = './Dockerfile'
+        APP_VERSION = "${env.BUILD_NUMBER}" // Cambia el tag de versión en cada construcción
     }
-    
+
     stages {
-        stage('Pull del Repositorio') {
-            steps {
-                // Clona o hace pull de tu repositorio de código
-                checkout scm
-            }
-        }
-        
-        stage('Pruebas Unitarias') {
-            steps {
-                // Ejecuta tus pruebas unitarias aquí
-                // Ejemplo: phpunit
-            }
-        }
-        
         stage('Construir y Publicar Imagen Docker') {
             steps {
                 script {
-                    // Construye la imagen Docker
-                    docker.build("${ECR_REGISTRY}/${ECR_REPO}:${TAG}")
+                    // Construir la imagen Docker
+                    def customImageTag = "${ECR_REGISTRY}/${ECR_REPO}:${APP_VERSION}"
+                    def latestImageTag = "${ECR_REGISTRY}/${ECR_REPO}:latest"
                     
-                    // Autentica con ECR
-                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'tus-credenciales-de-aws', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-                        docker.withRegistry("${ECR_REGISTRY}", 'ecr') {
-                            // Push de la imagen a ECR
-                            docker.image("${ECR_REGISTRY}/${ECR_REPO}:${TAG}").push()
-                            
-                            // Push de la imagen como 'latest'
-                            docker.image("${ECR_REGISTRY}/${ECR_REPO}:${TAG}").push('latest')
-                        }
+                    sh "docker build -t ${customImageTag} -f ${DOCKERFILE_PATH} ."
+                    
+                    // Autenticarse con ECR
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AwsCredentials', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                        // Cambiar el tag de la imagen en ECR de 'latest' a la versión actual
+                        sh "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
+                        sh "aws ecr batch-check-layer-availability --repository-name ${ECR_REPO} --image-id imageTag=${customImageTag}"
+                        
+                        // Hacer push de la imagen personalizada
+                        sh "docker push ${customImageTag}"
+                        
+                        // Actualizar el tag 'latest' en ECR con la versión actual
+                        sh "aws ecr batch-check-layer-availability --repository-name ${ECR_REPO} --image-id imageTag=${latestImageTag}"
+                        sh "aws ecr put-image --repository-name ${ECR_REPO} --image-tag latest --image-manifest '${customImageTag}'"
                     }
                 }
             }
@@ -44,8 +39,8 @@ pipeline {
         
         stage('Desplegar en Kubernetes') {
             steps {
-                // Utiliza kubectl para aplicar tus recursos de Kubernetes (Deployment, Servicio, etc.)
-                sh 'kubectl apply -f tus-manifestos-kubernetes/'
+                // Utilizar kubectl para aplicar los recursos de Kubernetes (Deployment, Servicio, etc.)
+                sh "kubectl apply -f ${K8S_MANIFESTS_DIR}"
             }
         }
     }
