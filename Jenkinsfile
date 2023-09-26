@@ -5,12 +5,17 @@ pipeline {
         // Variables de entorno
         ECR_REGISTRY = '309682544380.dkr.ecr.us-east-1.amazonaws.com'
         ECR_REPO = 'credit-card-simulator'
-        K8S_MANIFESTS_DIR = './Manifiesto.yml'
-        DOCKERFILE_PATH = './Dockerfile'
+        K8S_MANIFESTS_DIR = 'kubernetes/Manifiesto.yml'
         APP_VERSION = "${env.BUILD_NUMBER}" // Cambia el tag de versión en cada construcción
     }
 
     stages {
+        stage('Pull del Repositorio') {
+            steps {
+                checkout scm
+            }
+        }
+
         stage('Construir y Publicar Imagen Docker') {
             steps {
                 script {
@@ -18,7 +23,7 @@ pipeline {
                     def customImageTag = "${ECR_REGISTRY}/${ECR_REPO}:${APP_VERSION}"
                     def latestImageTag = "${ECR_REGISTRY}/${ECR_REPO}:latest"
                     
-                    sh "docker build -t ${customImageTag} -f ${DOCKERFILE_PATH} ."
+                    sh "docker build -t ${customImageTag} ."
                     
                     // Autenticarse con ECR
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AwsCredentials', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
