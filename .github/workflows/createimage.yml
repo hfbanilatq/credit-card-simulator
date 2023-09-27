@@ -31,7 +31,6 @@ jobs:
           ECR_REPO: 309682544380.dkr.ecr.us-east-1.amazonaws.com/credit-card-simulator
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $ECR_REPO:$IMAGE_TAG .
-          docker tag $ECR_REPO:$IMAGE_TAG $ECR_REPO:latest
-          docker push $ECR_REPO:$IMAGE_TAG
+          docker build -t $ECR_REPO .
+          docker tag $ECR_REPO:latest TAG $ECR_REPO:latest
           docker push $ECR_REPO:latest
