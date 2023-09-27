@@ -1,0 +1,37 @@
+name: Build and Push Docker Image to ECR
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set region us-east-1
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 309682544380.dkr.ecr.us-east-1.amazonaws.com
+
+      - name: Build and Push Docker Image
+        env:
+          ECR_REPO: 309682544380.dkr.ecr.us-east-1.amazonaws.com/credit-card-simulator
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REPO:$IMAGE_TAG .
+          docker tag $ECR_REPO:$IMAGE_TAG $ECR_REPO:latest
+          docker push $ECR_REPO:$IMAGE_TAG
+          docker push $ECR_REPO:latest
