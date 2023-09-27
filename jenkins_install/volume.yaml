@@ -30,7 +30,7 @@ spec:
         - key: kubernetes.io/hostname
           operator: In
           values:
-          - ip-10-0-14-72.ec2.internal
+          - ip-10-0-0-157.ec2.internal
 
 ---
 apiVersion: v1
