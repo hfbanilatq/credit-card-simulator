@@ -30,6 +30,6 @@ jobs:
         env:
           ECR_REPO: 309682544380.dkr.ecr.us-east-1.amazonaws.com/credit-card-simulator
         run: |
-          docker build -t $ECR_REPO:latest.
+          docker build -t $ECR_REPO:latest .
           docker tag $ECR_REPO:latest $ECR_REPO:latest
           docker push $ECR_REPO:latest
