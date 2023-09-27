@@ -13,6 +13,12 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_SECRET" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
 
       - name: Set up Docker
         uses: actions/setup-python@v2
@@ -40,6 +46,8 @@ jobs:
 
           echo "CURRENT_VERSION: $CURRENT_VERSION"
           echo "$NEW_VERSION" > version.txt
+          git config user.name = "Hector Fabio Banilat Quintero"
+          git config user.email = "hfbanilatq@gmail.com"
           git add version.txt
           git commit -m "Update version to $NEW_VERSION"
           git push origin master
