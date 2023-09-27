@@ -1,0 +1,45 @@
+name: Actualizar Tag de Imagen en ECR
+
+on:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  actualizar_tag_de_imagen:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Configurar AWS CLI
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1 # Reemplaza con tu región
+
+    - name: Obtener etiqueta actual de la imagen
+      id: get_tag
+      run: |
+        image_tag=$(aws ecr describe-images --repository-name 309682544380.dkr.ecr.us-east-1.amazonaws.com/tu-repo-ecr --query 'images[].imageTag' --output text | sort -V | tail -n 1)
+        echo "Image Tag: $image_tag"
+        echo "::set-output name=image_tag::$image_tag"
+
+    - name: Calcular nueva etiqueta
+      id: calcular_nueva_etiqueta
+      run: |
+        current_tag=$image_tag
+        new_tag=$(echo $current_tag | awk -F'.' '{print $1 "." $2 "." $3+1}')
+        echo "New Tag: $new_tag"
+        echo "::set-output name=new_tag::$new_tag"
+
+    - name: Cambiar etiqueta de imagen en ECR
+      run: |
+        new_tag=$new_tag
+        image_uri=309682544380.dkr.ecr.us-east-1.amazonaws.com/tu-repo-ecr:$new_tag
+        aws ecr batch-check-layer-availability --repository-name 309682544380.dkr.ecr.us-east-1.amazonaws.com/tu-repo-ecr --image-ids imageTag=$new_tag
+        docker pull $image_uri
+        docker tag $image_uri 309682544380.dkr.ecr.us-east-1.amazonaws.com/tu-repo-ecr:latest
+        aws ecr create-repository --repository-name 309682544380.dkr.ecr.us-east-1.amazonaws.com/tu-repo-ecr
+        docker push 309682544380.dkr.ecr.us-east-1.amazonaws.com/tu-repo-ecr:$new_tag
+        docker push 309682544380.dkr.ecr.us-east-1.amazonaws.com/tu-repo-ecr:latest
+
