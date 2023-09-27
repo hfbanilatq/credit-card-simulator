@@ -49,6 +49,7 @@ jobs:
           echo "::set-output name=NEW_VERSION::$NEW_VERSION"
       - name: Update image tag
         run: |
+          echo "NEW_VERSION: $NEW_VERSION"
           MANIFEST=$(aws ecr batch-get-image --repository-name credit-card-simulator --image-ids imageTag=latest --output text --query images[].imageManifest)
           aws ecr put-image --repository-name credit-card-simulator --image-tag $NEW_VERSION --image-manifest "$MANIFEST"
           aws ecr batch-delete-image --repository-name credit-card-simulator --image-ids imageTag=latest
