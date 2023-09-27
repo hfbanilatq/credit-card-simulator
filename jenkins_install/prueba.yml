@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: debug-deployment
+  namespace: devops-tools
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: debug-pod
+  template:
+    metadata:
+      labels:
+        app: debug-pod
+    spec:
+      containers:
+        - name: debug-container
+          image: amazonlinux:2
+          command: ["/bin/sleep", "3600"]
+      nodeSelector:
+        kubernetes.io/os: linux
