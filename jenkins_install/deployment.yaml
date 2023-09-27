@@ -19,7 +19,9 @@ spec:
       serviceAccountName: jenkins-admin
       containers:
         - name: jenkins
-          image: 309682544380.dkr.ecr.us-east-1.amazonaws.com/jenkins:latest
+          image: jenkins/jenkins:lts
+          securityContext:
+            privileged: true
           resources:
             limits:
               memory: "2Gi"
@@ -50,8 +52,13 @@ spec:
             failureThreshold: 3
           volumeMounts:
             - name: jenkins-data
-              mountPath: /var/jenkins_home         
+              mountPath: /var/jenkins_home
+            - name: docker-socket
+              mountPath: /var/run/docker.sock  # Monta el socket de Docker   
       volumes:
         - name: jenkins-data
           persistentVolumeClaim:
               claimName: jenkins-pv-claim
+        - name: docker-socket
+          hostPath:
+            path: /var/run/docker.sock  # Ruta al socket de Docker del nodo host
