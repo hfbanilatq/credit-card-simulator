@@ -30,24 +30,27 @@ jobs:
       - name: Determine next version
         id: determine-version
         run: |
-          CURRENT_VERSION=$GITHUB_REF
-          CURRENT_VERSION=${CURRENT_VERSION#refs/tags/}
-
+          # Obtener la última etiqueta de versión
+          CURRENT_VERSION=$(git describe --tags --abbrev=0)
+          
           if [[ "$CURRENT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            # Increment the patch version
-            NEW_VERSION="1.${BASH_REMATCH[0]}.0"
+            # Incrementar la versión de parche
+            IFS='.' read -ra PARTS <<< "$CURRENT_VERSION"
+            NEW_VERSION="${PARTS[0]}.${PARTS[1]}.$((PARTS[2] + 1))"
           elif [[ "$CURRENT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-rc[0-9]+$ ]]; then
-            # Increment the release candidate version
-            RC_NUMBER=${BASH_REMATCH[0]#*-rc}
+            # Incrementar la versión de la versión candidata de lanzamiento
+            RC_NUMBER=${CURRENT_VERSION#*-rc}
             NEW_RC_NUMBER=$((RC_NUMBER + 1))
-            NEW_VERSION="1.${BASH_REMATCH[0]%-*}-rc${NEW_RC_NUMBER}"
+            NEW_VERSION="${CURRENT_VERSION%-*}-rc${NEW_RC_NUMBER}"
           else
-            # Invalid version format, default to 1.0.0
+            # Formato de versión no válido, establecer en 1.0.0
             NEW_VERSION="1.0.0"
           fi
 
           echo "CURRENT_VERSION: $CURRENT_VERSION"
           echo "NEW_VERSION: $NEW_VERSION"
+
+          echo "::set-output name=NEW_VERSION::$NEW_VERSION"
       - name: Update image tag
         run: |
           echo "NEW_VERSION: $NEW_VERSION"
