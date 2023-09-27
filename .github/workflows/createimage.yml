@@ -25,11 +25,39 @@ jobs:
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws configure set region us-east-1
           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 309682544380.dkr.ecr.us-east-1.amazonaws.com
+      - name: Set initial version
+        run: echo "::set-output name=VERSION::1.0.0"
+      - name: Determine next version
+        id: determine-version
+        run: |
+          CURRENT_VERSION=$GITHUB_REF
+          CURRENT_VERSION=${CURRENT_VERSION#refs/tags/}
 
+          if [[ "$CURRENT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            # Increment the patch version
+            NEW_VERSION="1.${BASH_REMATCH[0]}.0"
+          elif [[ "$CURRENT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-rc[0-9]+$ ]]; then
+            # Increment the release candidate version
+            RC_NUMBER=${BASH_REMATCH[0]#*-rc}
+            NEW_RC_NUMBER=$((RC_NUMBER + 1))
+            NEW_VERSION="1.${BASH_REMATCH[0]%-*}-rc${NEW_RC_NUMBER}"
+          else
+            # Invalid version format, default to 1.0.0
+            NEW_VERSION="1.0.0"
+          fi
+
+          echo "::set-output name=NEW_VERSION::$NEW_VERSION"
+      - name: Update image tag
+        run: |
+          MANIFEST=$(aws ecr batch-get-image --repository-name credit-card-simulator --image-ids imageTag=latest --output text --query images[].imageManifest)
+          aws ecr put-image --repository-name credit-card-simulator --image-tag $NEW_VERSION --image-manifest "$MANIFEST"
+          aws ecr batch-delete-image --repository-name credit-card-simulator --image-ids imageTag=latest
       - name: Build and Push Docker Image
         env:
           ECR_REPO: 309682544380.dkr.ecr.us-east-1.amazonaws.com/credit-card-simulator
+          IMAGE_TAG: ${{ github.sha }}
         run: |
           docker build -t $ECR_REPO:latest .
           docker tag $ECR_REPO:latest $ECR_REPO:latest
+          docker push $ECR_REPO:latest
           docker push $ECR_REPO:latest
