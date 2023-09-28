@@ -23,26 +23,60 @@ pipeline {
                     def DEPLOYMENT = APP_VERSION.toInteger() % 10
                     def CUSTOM_TAG = "${MAYOR}.${MINOR}.${DEPLOYMENT}"
 
-                    // Autenticarse con ECR
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AwsCredentials', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-                        // Cambiar el tag de la imagen en ECR de 'latest' a la versión actual
-                        sh "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
-                        def MANIFEST = sh "aws ecr batch-get-image --repository-name ${ECR_REPO} --image-ids imageTag=latest --output text --query images[].imageManifest"
-                        sh "aws ecr put-image --repository-name ${ECR_REPO} --image-tag ${CUSTOM_TAG} --image-manifest '${MANIFEST}'"
-                        // Hacer push de la imagen personalizada
-                        sh "aws ecr batch-delete-image --repository-name ${ECR_REPO} --image-ids imageTag=latest"
+ 
+                        // Importar las clases necesarias del SDK de AWS para Java
+                        def AmazonECRClient = new AmazonECRClient()
+                        AmazonECRClient.setRegion(Regions.US_EAST_1) // Reemplaza con tu región
+
+                        // Obtener el manifiesto de la última imagen en el repositorio
+                        def latestImageTag = "latest" // Etiqueta de la última imagen
+                        def getBatchImageRequest = new BatchCheckLayerAvailabilityRequest()
+                                .withRepositoryName(ECR_REPO)
+                                .withImageIds(new ImageIdentifier().withImageTag(latestImageTag))
+                        def layerAvailabilityResponse = AmazonECRClient.batchCheckLayerAvailability(getBatchImageRequest)
+                        def imageDigest = layerAvailabilityResponse.getLayers().first().getLayerDigest()
+
+                        // Crear una nueva etiqueta para la imagen personalizada
+                        def putImageRequest = new PutImageRequest()
+                                .withRepositoryName(ECR_REPO)
+                                .withImageTag(CUSTOM_TAG)
+                                .withImageManifest(layerAvailabilityResponse.getLayerDigests().first())
+                        AmazonECRClient.putImage(putImageRequest)
+
+                        // Eliminar la etiqueta "latest" de la imagen
+                        def deleteImageRequest = new BatchDeleteImageRequest()
+                                .withRepositoryName(ECR_REPO)
+                                .withImageIds(new ImageIdentifier().withImageTag(latestImageTag))
+                        AmazonECRClient.batchDeleteImage(deleteImageRequest)
                     }
                 }
             }
         }
 
-        stage('Eliminar la antepenultima imagen') {
+        stage('Eliminar la imagen mas antigua') {
             steps {
                 script {
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AwsCredentials', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-                        def images = sh(script: "aws ecr describe-images --repository-name ${ECR_REPO} --query 'reverse(sort_by(imageDetails, &imagePushedAt))[].imageDigest'", returnStatus: true).trim()
-                        def imageToDelete = sh(script: "echo '${images}' | sed -n '2p' | tr -d ','", returnStatus: true).trim()
-                        sh "aws ecr batch-delete-image --repository-name ${ECR_REPO} --image-ids imageDigest='${imageToDelete}'"
+
+                        def AmazonECRClient = new AmazonECRClient()
+                        AmazonECRClient.setRegion(Regions.US_EAST_1) 
+
+                        def listImagesRequest = new ListImagesRequest()
+                                .withRepositoryName(ECR_REPO)
+                                .withMaxResults(1000) 
+                        def listImagesResponse = AmazonECRClient.listImages(listImagesRequest)
+
+                        def sortedImages = listImagesResponse.getImageIds().sort { a, b ->
+                            b.getImagePushedAt().compareTo(a.getImagePushedAt())
+                        }
+
+                        def antepenultimateImage = sortedImages[sortedImages.size()-1]
+
+                        def batchDeleteRequest = new BatchDeleteImageRequest()
+                                .withRepositoryName(ECR_REPO)
+                                .withImageIds(antepenultimateImage)
+                        AmazonECRClient.batchDeleteImage(batchDeleteRequest)
                     }
                 }
             }
@@ -50,10 +84,8 @@ pipeline {
 
         stage('Construir imagen y enviar al repositorio') {
             steps {
-                sh "docker build -t ${ECR_REGISTRY}/${ECR_REPO}:latest ."
-                sh "docker tag  ${ECR_REGISTRY}/${ECR_REPO}:latest ${ECR_REPO}:latest"
-                sh "docker push  ${ECR_REGISTRY}/${ECR_REPO}:latest"
-                sh "docker push  ${ECR_REGISTRY}/${ECR_REPO}:latest"
+                docker.build("${ECR_REGISTRY}/${ECR_REPO}:${CUSTOM_TAG}", ".")
+                docker.image("${ECR_REGISTRY}/${ECR_REPO}:${CUSTOM_TAG}").push()
             }
         }
 
