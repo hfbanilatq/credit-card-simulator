@@ -23,11 +23,6 @@ pipeline {
                     def DEPLOYMENT = APP_VERSION.toInteger() % 10
                     def CUSTOM_TAG = "${MAYOR}.${MINOR}.${DEPLOYMENT}"
 
-                    // Asegúrate de que tu Dockerfile esté configurado correctamente para `containerd`
-                    
-                    // Construir la imagen con `ctr` (esto podría no ser necesario en Kubernetes)
-                    sh "ctr -n=k8s.io images import . ${customImageTag}"
-
                     // Autenticarse con ECR
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AwsCredentials', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
                         // Cambiar el tag de la imagen en ECR de 'latest' a la versión actual
