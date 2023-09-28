@@ -1,12 +1,7 @@
 /* groovylint-disable LineLength, NestedBlockDepth */
 pipeline {
-    agent {
-        kubernetes {
-            // This is a YAML representation of the Pod, to allow setting any values not supported as fields.
-            label 'agent-name=jenkins-pipeline'
-        }
-    }
-
+    agent any
+    
     environment {
         ECR_REGISTRY = '309682544380.dkr.ecr.us-east-1.amazonaws.com'
         ECR_REPO = 'credit-card-simulator'
