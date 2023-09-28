@@ -1,7 +1,7 @@
 /* groovylint-disable LineLength, NestedBlockDepth */
 pipeline {
     agent any
-    
+
     environment {
         ECR_REGISTRY = '309682544380.dkr.ecr.us-east-1.amazonaws.com'
         ECR_REPO = 'credit-card-simulator'
@@ -18,7 +18,6 @@ pipeline {
         }
         stage('Instalar dependencias') {
             steps {
-                sh 'npm install'
                 sh 'composer install'
             }
         }
