@@ -52,7 +52,7 @@ pipeline {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AwsCredentials', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
                 def images = sh "aws ecr describe-images --repository-name ${ECR_REPO} --query 'reverse(sort_by(imageDetails, &imagePushedAt))[].imageDigest'"
-                def imageToDelete = sh "$(echo '${images}' | sed -n '2p' | tr -d ',')"
+                def imageToDelete = sh "echo '${images}' | sed -n '2p' | tr -d ','"
                 sh "aws ecr batch-delete-image --repository-name ${ECR_REPO} --image-ids imageDigest='${imageToDelete}'"
                 }
             }
