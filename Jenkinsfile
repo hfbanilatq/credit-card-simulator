@@ -6,6 +6,7 @@ pipeline {
         ECR_REPO = 'credit-card-simulator'
         K8S_MANIFESTS_DIR = 'kubernetes/Manifiesto.yml'
         APP_VERSION = "${env.BUILD_NUMBER}"
+        AWS_CREDENTIALS_ID = 'AwsCredentials'
     }
 
     stages {
@@ -18,7 +19,7 @@ pipeline {
         stage('Construir imagen y enviar al repositorio') {
             steps {
                 script {
-                    docker.withRegistry("${ECR_REGISTRY}", "${AwsCredentials}") {
+                    docker.withRegistry("${ECR_REGISTRY}", "${AWS_CRENDENTIALS_ID}") {
                         docker.build("${ECR_REGISTRY}/${ECR_REPO}:lastes", ".")
                         docker.image("${ECR_REGISTRY}/${ECR_REPO}:latest").push()
                     }  
