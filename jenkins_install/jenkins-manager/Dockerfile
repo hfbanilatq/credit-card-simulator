@@ -16,6 +16,8 @@ RUN set +x && echo ''; echo '*** INSTALLED SOFTWARE VERSIONS ***';echo ''; \
 
 #Instalar php y composer
 RUN apt install php-cli -y
+
+RUN apt-get install php-dom -y
 RUN curl -sS https://getcomposer.org/installer -o /tmp/composer-setup.php
 RUN php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer
 
