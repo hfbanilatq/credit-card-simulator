@@ -3,7 +3,7 @@ pipeline {
     agent {
         kubernetes {
             // This is a YAML representation of the Pod, to allow setting any values not supported as fields.
-            yamlFile 'kubernetes/agent.yaml' // Declarative agents can be defined from YAML.
+            yamlFile 'kubernates/agent.yml' // Declarative agents can be defined from YAML.
         }
     }
 
@@ -87,13 +87,6 @@ pipeline {
             steps {
                 sh "kubectl --kubeconfig=${Kubernetes} apply -f ${K8S_MANIFESTS_DIR}/"
             }
-        }
-    }
-
-    post {
-        always {
-            // Limpiar y eliminar dependencias al finalizar
-            sh 'composer install --no-dev --optimize-autoloader'
         }
     }
 }
