@@ -3,7 +3,7 @@ pipeline {
     agent {
         kubernetes {
             // This is a YAML representation of the Pod, to allow setting any values not supported as fields.
-            yamlFile 'kubernates/agent.yml' // Declarative agents can be defined from YAML.
+            label 'agent-name=jenkins-pipeline'
         }
     }
 
