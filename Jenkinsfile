@@ -1,17 +1,10 @@
 pipeline {
-    agent {
-        kubernetes {
-            label 'my-k8s-agent-label' // Etiqueta que coincide con la configuración de tu nube de Kubernetes
-            defaultContainer 'jnlp' // Nombre del contenedor JNLP
-        }
-    }
 
     environment {
-        // Variables de entorno
         ECR_REGISTRY = '309682544380.dkr.ecr.us-east-1.amazonaws.com'
         ECR_REPO = 'credit-card-simulator'
         K8S_MANIFESTS_DIR = 'kubernetes/Manifiesto.yml'
-        APP_VERSION = "${env.BUILD_NUMBER}" // Cambia el tag de versión en cada construcción
+        APP_VERSION = "${env.BUILD_NUMBER}"
     }
 
     stages {
@@ -24,7 +17,6 @@ pipeline {
         stage('Reemplazar Imagen Tag') {
             steps {
                 script {
-                    // Construir la imagen Containerd (esto podría no ser necesario en Kubernetes)
                     def MAYOR = 1 + ${APP_VERSION} / 100
                     def MINOR = (${APP_VERSION} / 10) % 10
                     def DEPLOYMENT = ${APP_VERSION} % 10
@@ -50,10 +42,11 @@ pipeline {
 
         stage('Eliminar la antepenultima imagen') {
             steps {
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AwsCredentials', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-                def images = sh "aws ecr describe-images --repository-name ${ECR_REPO} --query 'reverse(sort_by(imageDetails, &imagePushedAt))[].imageDigest'"
-                def imageToDelete = sh "echo '${images}' | sed -n '2p' | tr -d ','"
-                sh "aws ecr batch-delete-image --repository-name ${ECR_REPO} --image-ids imageDigest='${imageToDelete}'"
+                script {
+                    def kubeconfigCred = credentials('Kubernetes')
+                    def images = sh(script: "aws ecr describe-images --repository-name ${ECR_REPO} --query 'reverse(sort_by(imageDetails, &imagePushedAt))[].imageDigest'", returnStatus: true).trim()
+                    def imageToDelete = sh(script: "echo '${images}' | sed -n '2p' | tr -d ','", returnStatus: true).trim()
+                    sh "aws ecr batch-delete-image --repository-name ${ECR_REPO} --image-ids imageDigest='${imageToDelete}'"
                 }
             }
         }
