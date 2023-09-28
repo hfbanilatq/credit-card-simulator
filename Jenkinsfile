@@ -19,7 +19,7 @@ pipeline {
             steps {
                 script {
                     def MAYOR = 1 + APP_VERSION.toInteger() / 100
-                    def MINOR = Math.floor(APP_VERSION.toInteger() / 10) % 10
+                    def MINOR = (int) (APP_VERSION.toInteger() / 10) % 10
                     def DEPLOYMENT = APP_VERSION.toInteger() % 10
                     def CUSTOM_TAG = "${MAYOR}.${MINOR}.${DEPLOYMENT}"
 
