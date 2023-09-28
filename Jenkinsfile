@@ -1,4 +1,5 @@
 pipeline {
+    agent any
 
     environment {
         ECR_REGISTRY = '309682544380.dkr.ecr.us-east-1.amazonaws.com'
@@ -43,10 +44,11 @@ pipeline {
         stage('Eliminar la antepenultima imagen') {
             steps {
                 script {
-                    def kubeconfigCred = credentials('Kubernetes')
-                    def images = sh(script: "aws ecr describe-images --repository-name ${ECR_REPO} --query 'reverse(sort_by(imageDetails, &imagePushedAt))[].imageDigest'", returnStatus: true).trim()
-                    def imageToDelete = sh(script: "echo '${images}' | sed -n '2p' | tr -d ','", returnStatus: true).trim()
-                    sh "aws ecr batch-delete-image --repository-name ${ECR_REPO} --image-ids imageDigest='${imageToDelete}'"
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AwsCredentials', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                        def images = sh(script: "aws ecr describe-images --repository-name ${ECR_REPO} --query 'reverse(sort_by(imageDetails, &imagePushedAt))[].imageDigest'", returnStatus: true).trim()
+                        def imageToDelete = sh(script: "echo '${images}' | sed -n '2p' | tr -d ','", returnStatus: true).trim()
+                        sh "aws ecr batch-delete-image --repository-name ${ECR_REPO} --image-ids imageDigest='${imageToDelete}'"
+                    }
                 }
             }
         }
@@ -62,8 +64,7 @@ pipeline {
 
         stage('Desplegar en Kubernetes') {
             steps {
-                def kubeconfigCred = credentials('Kubernetes')
-                sh "kubectl --kubeconfig=${kubeconfigCred} apply -f ${K8S_MANIFESTS_DIR}/"
+                sh "kubectl --kubeconfig=${Kubernetes} apply -f ${K8S_MANIFESTS_DIR}/"
             }
         }
     }
