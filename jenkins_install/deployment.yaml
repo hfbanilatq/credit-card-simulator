@@ -1,38 +1,42 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: jenkins
-  namespace: devops-tools
+  name: jenkins-manager
+  namespace: jenkins
+  labels:
+    app.kubernetes.io/name: jenkins
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
   selector:
     matchLabels:
-      app: jenkins-server
+      app.kubernetes.io/name: jenkins
   template:
     metadata:
       labels:
-        app: jenkins-server
+        app.kubernetes.io/name: jenkins
     spec:
+      serviceAccountName: jenkins-manager
       securityContext:
-        fsGroup: 1000 
-        runAsUser: 1000
-      serviceAccountName: jenkins-admin
+        runAsUser: 0
+        fsGroup: 0
+        runAsNonRoot: false
       containers:
-        - name: jenkins
-          image: jenkins/jenkins:lts
-          securityContext:
-            privileged: true
+        - name: jenkins-manager
+          image: 309682544380.dkr.ecr.us-east-1.amazonaws.com/jenkins-manager:latest
+          imagePullPolicy: Always
           resources:
             limits:
               memory: "2Gi"
               cpu: "1000m"
             requests:
-              memory: "500Mi"
+              memory: "512Mi"
               cpu: "500m"
           ports:
-            - name: httpport
+            - name: manger
               containerPort: 8080
-            - name: jnlpport
+            - name: jnlp
               containerPort: 50000
           livenessProbe:
             httpGet:
@@ -55,22 +59,10 @@ spec:
               mountPath: /var/jenkins_home
             - name: docker-socket
               mountPath: /var/run/docker.sock
-            - name: aws-cli
-              mountPath: /usr/bin/aws
-              subPath: aws
-        - name: php-container
-          image: php:8.1
-          command: ["/bin/sleep", "infinity"] 
-          volumeMounts:
-            - name: jenkins-data
-              mountPath: /var/jenkins_home
       volumes:
         - name: jenkins-data
           persistentVolumeClaim:
             claimName: jenkins-pv-claim
         - name: docker-socket
-          hostPath:
-            path: /var/run/docker.sock
-        - name: aws-cli
           hostPath:
             path: /var/run/docker.sock
