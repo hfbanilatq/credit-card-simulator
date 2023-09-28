@@ -18,9 +18,9 @@ pipeline {
         stage('Reemplazar Imagen Tag') {
             steps {
                 script {
-                    def MAYOR = 1 + ${APP_VERSION} / 100
-                    def MINOR = (${APP_VERSION} / 10) % 10
-                    def DEPLOYMENT = ${APP_VERSION} % 10
+                    def MAYOR = 1 + APP_VERSION / 100
+                    def MINOR = (APP_VERSION / 10) % 10
+                    def DEPLOYMENT = APP_VERSION % 10
                     def CUSTOM_TAG = "${MAYOR}.${MINOR}.${DEPLOYMENT}"
 
                     // Asegúrate de que tu Dockerfile esté configurado correctamente para `containerd`
