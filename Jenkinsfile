@@ -15,6 +15,11 @@ pipeline {
                 checkout scm
             }
         }
+        stage('Instalar dependencias') {
+            steps {
+                sh 'composer install'
+            }
+        }
 
         stage('Construir imagen y enviar al repositorio') {
             steps {
