@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        kubernetes {
+            label 'my-k8s-agent-label' // Etiqueta que coincide con la configuración de tu nube de Kubernetes
+            defaultContainer 'jnlp' // Nombre del contenedor JNLP
+        }
+    }
 
     environment {
         // Variables de entorno
@@ -16,33 +21,49 @@ pipeline {
             }
         }
 
-        stage('Construir y Publicar Imagen Containerd') {
+        stage('Reemplazar Imagen Tag') {
             steps {
                 script {
-                    // Construir la imagen Containerd
-                    def customImageTag = "${ECR_REGISTRY}/${ECR_REPO}:${APP_VERSION}"
-                    def latestImageTag = "${ECR_REGISTRY}/${ECR_REPO}:latest"
+                    // Construir la imagen Containerd (esto podría no ser necesario en Kubernetes)
+                    def MAYOR = 1 + ${APP_VERSION} / 100
+                    def MINOR = (${APP_VERSION} / 10) % 10
+                    def DEPLOYMENT = ${APP_VERSION} % 10
+                    def CUSTOM_TAG = "${MAYOR}.${MINOR}.${DEPLOYMENT}"
 
                     // Asegúrate de que tu Dockerfile esté configurado correctamente para `containerd`
                     
-                    // Construir la imagen con `ctr`
+                    // Construir la imagen con `ctr` (esto podría no ser necesario en Kubernetes)
                     sh "ctr -n=k8s.io images import . ${customImageTag}"
 
                     // Autenticarse con ECR
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AwsCredentials', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
                         // Cambiar el tag de la imagen en ECR de 'latest' a la versión actual
                         sh "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
-                        sh "aws ecr batch-check-layer-availability --repository-name ${ECR_REPO} --image-id imageTag=${customImageTag}"
-
+                        def MANIFEST = sh "aws ecr batch-get-image --repository-name ${ECR_REPO} --image-ids imageTag=latest --output text --query images[].imageManifest"
+                        sh "aws ecr put-image --repository-name ${ECR_REPO} --image-tag ${CUSTOM_TAG} --image-manifest '${MANIFEST}'"
                         // Hacer push de la imagen personalizada
-                        sh "ctr -n=k8s.io images tag ${customImageTag} ${latestImageTag}"
-                        sh "ctr -n=k8s.io images push ${latestImageTag}"
-                        
-                        // Actualizar el tag 'latest' en ECR con la versión actual
-                        sh "aws ecr batch-check-layer-availability --repository-name ${ECR_REPO} --image-id imageTag=${latestImageTag}"
-                        sh "aws ecr put-image --repository-name ${ECR_REPO} --image-tag latest --image-manifest '${customImageTag}'"
+                        sh "aws ecr batch-delete-image --repository-name ${ECR_REPO} --image-ids imageTag=latest"
                     }
                 }
+            }
+        }
+
+        stage('Eliminar la antepenultima imagen') {
+            steps {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AwsCredentials', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                def images = sh "aws ecr describe-images --repository-name ${ECR_REPO} --query 'reverse(sort_by(imageDetails, &imagePushedAt))[].imageDigest'"
+                def imageToDelete = sh "$(echo '${images}' | sed -n '2p' | tr -d ',')"
+                sh "aws ecr batch-delete-image --repository-name ${ECR_REPO} --image-ids imageDigest='${imageToDelete}'"
+                }
+            }
+        }
+
+        stage('Construir imagen y enviar al repositorio') {
+            steps {
+                sh "docker build -t ${ECR_REGISTRY}/${ECR_REPO}:latest ."
+                sh "docker tag  ${ECR_REGISTRY}/${ECR_REPO}:latest ${ECR_REPO}:latest"
+                sh "docker push  ${ECR_REGISTRY}/${ECR_REPO}:latest"
+                sh "docker push  ${ECR_REGISTRY}/${ECR_REPO}:latest"
             }
         }
 
