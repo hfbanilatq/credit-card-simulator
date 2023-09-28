@@ -5,6 +5,8 @@ metadata:
   namespace: jenkins
   labels:
     some-label: jenkins-pipeline
+  annotations:  # Agrega esta sección para incluir la anotación
+    kubernetes.io/config.mirror: jenkins-agent-mirror
 spec:
   serviceAccountName: jenkins-agent
   securityContext:
