@@ -18,6 +18,7 @@ pipeline {
         }
         stage('Instalar dependencias') {
             steps {
+                sh 'composer update'
                 sh 'composer install'
             }
         }
