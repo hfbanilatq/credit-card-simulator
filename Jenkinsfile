@@ -94,8 +94,8 @@ pipeline {
             steps {
                 container('jenkins-agent') {
                     script {
-                        withCredentials(['KUBERNETES_ID']) {
-                            sh "kubectl --kubeconfig=\$HOME/.kube/config --token=\$TOKEN --server=\$SERVER --insecure-skip-tls-verify=true apply -f ${K8S_MANIFESTS_DIR}"
+                        withKubeConfig([credentialsId:'KUBERNETES_ID']) {
+                            sh "kubectl apply -f ${K8S_MANIFESTS_DIR}"
                         }
                     }
                 }
