@@ -33,7 +33,7 @@ pipeline {
                     def int deployment = APP_VERSION.toInteger() % 10
                     def String customTag = "${mayor}.${minor}.${deployment}"
 
-                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AwsCredentials', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AWS_CREDENTIALS', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
                         def manifest = ""
                         manifest = sh(script: "aws ecr batch-get-image --repository-name ${ECR_REPO} --image-ids imageTag=latest --output text --query images[].imageManifest", returnStdout: true).trim()
                         
@@ -51,7 +51,7 @@ pipeline {
         stage('Eliminar la antepenultima imagen') {
             steps {
                 script {
-                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AwsCredentials', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AWS_CREDENTIALS', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
                         String images = ""
                         images = sh(script: "aws ecr describe-images --repository-name ${ECR_REPO} --query 'reverse(sort_by(imageDetails, &imagePushedAt))[].imageDigest'", returnStatus: true)
                         String imageToDelete = sh(script: "echo '${images}' | sed -n '2p' | tr -d ','", returnStatus: true)
@@ -69,8 +69,9 @@ pipeline {
         stage('Construir imagen y enviar al repositorio') {
             steps {
                 script {
-                    docker.withRegistry("https://${ECR_REGISTRY}", 'ecr:us-east-1:AKIAUQGUET36PUFCKQVW') {
-                        docker.build("${ECR_REGISTRY}/${ECR_REPO}:latest", '.')
+                    docker.build("${ECR_REGISTRY}/${ECR_REPO}:latest", '.')
+                    docker.withRegistry("https://${ECR_REGISTRY}", 'ecr:us-east-1:' + 'AWS_CREDENTIALS') {
+                        
                         docker.image("${ECR_REGISTRY}/${ECR_REPO}:latest").push()
                     }
                 }
