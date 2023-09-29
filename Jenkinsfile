@@ -92,7 +92,7 @@ pipeline {
 
         stage('Desplegar en Kubernetes') {
             steps {
-                sh "kubectl --kubeconfig=${kubernetes} apply -f ${K8S_MANIFESTS_DIR}/"
+                sh "kubectl --kubeconfig=${KUBERNETES_ID} apply -f ${K8S_MANIFESTS_DIR}/"
             }
         }
     }
