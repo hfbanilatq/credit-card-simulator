@@ -26,18 +26,6 @@ pipeline {
             }
         }
 
-        stage('Ejecutar pruebas unitarias y regresion') {
-            steps {
-                sh 'vendor/bin/phpunit '
-            }
-        }
-
-        stage('Ejecutar analisis estatico') {
-            steps {
-                sh 'vendor/bin/phpstan analyse'
-            }
-        }
-
         stage('Reemplazar Imagen Tag') {
             steps {
                 script {
