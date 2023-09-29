@@ -20,6 +20,7 @@ COPY . .
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 # Instala las dependencias de Composer
+RUN composer update
 RUN composer install
 
 # Expone el puerto 80

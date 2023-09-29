@@ -16,24 +16,25 @@ pipeline {
                 checkout scm
             }
         }
-        stage('Instalar dependencias') {
+        stage('Instalar dependencias y construir') {
             steps {
-                sh 'composer update'
+                sh 'php --version'
                 sh 'composer install'
+                sh 'composer --version'
+                sh 'cp .env.example .env'
+                sh 'php artisan key:generate'
             }
         }
-        stage('Publicar resultados') {
+
+        stage('Ejecutar pruebas unitarias y regresion') {
             steps {
-                // Publicar los resultados de las pruebas unitarias y análisis estático en Jenkins
-                junit '**/junit-*.xml'
-                publishHTML(target: [
-                    allowMissing: false,
-                    alwaysLinkToLastBuild: true,
-                    keepAll: true,
-                    reportDir: 'storage/reports',
-                    reportFiles: 'phpstan-report.html',
-                    reportName: 'Análisis Estático'
-                ])
+                sh 'vendor/bin/phpunit --coverage-html "reports/coverage"'
+            }
+        }
+
+        stage('Ejecutar analisis estatico') {
+            steps {
+                sh 'vendor/bin/phpstan analyse --memory-limit=2G'
             }
         }
 
