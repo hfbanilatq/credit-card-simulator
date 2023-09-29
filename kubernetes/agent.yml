@@ -12,6 +12,18 @@ spec:
     fsGroup: 0
     runAsNonRoot: false
   containers:
+  - name: jenkins-agent
+    image: 309682544380.dkr.ecr.us-east-1.amazonaws.com/jenkins-agent:latest
+    command:
+    - cat
+    tty: true
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: "1"
+        memory: 1024Mi
   - name: dind
     image: docker:dind
     command:
