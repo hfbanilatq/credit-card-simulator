@@ -7,7 +7,6 @@ pipeline {
         ECR_REPO = 'credit-card-simulator'
         K8S_MANIFESTS_DIR = 'kubernetes/Manifiesto.yml'
         APP_VERSION = "${env.BUILD_NUMBER}"
-        AWS_CREDENTIALS_ID = 'AwsCredentials'
     }
 
     stages {
@@ -26,12 +25,39 @@ pipeline {
             }
         }
 
-      
+        stage('Reemplazar Imagen Tag') {
+            steps {
+                script {
+                    def int mayor = 1 + APP_VERSION.toInteger() / 100
+                    def int minor = (int) (APP_VERSION.toInteger() / 10) % 10
+                    def int deployment = APP_VERSION.toInteger() % 10
+                    def String customTag = "${mayor}.${minor}.${deployment}"
+
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AwsCredentials', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                        String manifest = sh "aws ecr batch-get-image --repository-name ${ECR_REPO} --image-ids imageTag=latest --output text --query images[].imageManifest"
+                        sh "aws ecr put-image --repository-name ${ECR_REPO} --image-tag ${customTag} --image-manifest '${manifest}'"
+                        sh "aws ecr batch-delete-image --repository-name ${ECR_REPO} --image-ids imageTag=latest"
+                    }
+                }
+            }
+        }
+
+        stage('Eliminar la antepenultima imagen') {
+            steps {
+                script {
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AwsCredentials', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                        String images = sh(script: "aws ecr describe-images --repository-name ${ECR_REPO} --query 'reverse(sort_by(imageDetails, &imagePushedAt))[].imageDigest'", returnStatus: true).trim()
+                        String imageToDelete = sh(script: "echo '${images}' | sed -n '2p' | tr -d ','", returnStatus: true).trim()
+                        sh "aws ecr batch-delete-image --repository-name ${ECR_REPO} --image-ids imageDigest='${imageToDelete}'"
+                    }
+                }
+            }
+        }
 
         stage('Construir imagen y enviar al repositorio') {
             steps {
                 script {
-                    docker.withRegistry("https://${ECR_REGISTRY}", "ecr:us-east-1:${AWS_CREDENTIALS_ID}") {
+                    docker.withRegistry("https://${ECR_REGISTRY}", 'ecr:us-east-1:AwsCredentials') {
                         docker.build("${ECR_REGISTRY}/${ECR_REPO}:latest", '.')
                         docker.image("${ECR_REGISTRY}/${ECR_REPO}:latest").push()
                     }
