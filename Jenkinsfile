@@ -34,7 +34,7 @@ pipeline {
                     def String customTag = "${mayor}.${minor}.${deployment}"
 
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AwsCredentials', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-                        manifest = sh "aws ecr batch-get-image --repository-name ${ECR_REPO} --image-ids imageTag=latest --output text --query images[].imageManifest"
+                        def manifest = sh "aws ecr batch-get-image --repository-name ${ECR_REPO} --image-ids imageTag=latest --output text --query images[].imageManifest"
                          sh "echo 'Cualquier cosa ${manifest}'"
                          
                          sh "manifiesto=$(aws ecr batch-get-image --repository-name ${ECR_REPO} --image-ids imageTag=latest --output text --query images[].imageManifest)"
