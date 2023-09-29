@@ -12,9 +12,20 @@ RUN apt-get -y update \
 #Instalar php y composer
 RUN apt install php-cli -y
 RUN apt-get install php-dom -y
+RUN apt-get install php-dom -y
+RUN apt-get install php-curl -y
+RUN apt-get install php-gd -y
+RUN apt-get install php-bcmath -y
+RUN apt-get install php-cgi -y
+RUN apt-get install php-ldap -y
+RUN apt-get install php-mbstring -y
+RUN apt-get install php-soap -y
+RUN apt-get install php-zip -y
 RUN curl -sS https://getcomposer.org/installer -o /tmp/composer-setup.php
 RUN php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer
 
 RUN apt-get install -y nodejs
 RUN apt install npm -y
+RUN apt-get install php-xdebug -y
+RUN apt-get install php-sqlite3 -y
 USER jenkins
