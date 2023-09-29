@@ -29,11 +29,11 @@ RUN apt-get install php-zip -y
 RUN curl -sS https://getcomposer.org/installer -o /tmp/composer-setup.php
 RUN php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer
 
+
+
 RUN apt-get install -y nodejs
 RUN apt install npm -y
 RUN apt-get install php-xdebug -y
-RUN php -i
-
 # change directory owner for jenkins home
 RUN chown -R jenkins:jenkins /var/jenkins_home
 

@@ -28,13 +28,13 @@ pipeline {
 
         stage('Ejecutar pruebas unitarias y regresion') {
             steps {
-                sh 'vendor/bin/phpunit --coverage-html "reports/coverage"'
+                sh 'vendor/bin/phpunit '
             }
         }
 
         stage('Ejecutar analisis estatico') {
             steps {
-                sh 'vendor/bin/phpstan analyse --memory-limit=2G'
+                sh 'vendor/bin/phpstan analyse'
             }
         }
 
