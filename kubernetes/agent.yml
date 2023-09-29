@@ -22,10 +22,15 @@ spec:
       limits:
         cpu: "1"
         memory: 1024Mi
+  - name: docker
+    image: docker:dind
+    command:
+    - cat
+    tty: true
     volumeMounts:
       - mountPath: /var/run/docker.sock
         name: docker-socket
   volumes:
   - name: docker-socket
     hostPath:
-      path: /var/run/docker.sock  
+      path: /var/run/docker.sock

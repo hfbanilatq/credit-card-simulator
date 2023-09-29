@@ -1,6 +1,10 @@
 /* groovylint-disable LineLength, NestedBlockDepth */
 pipeline {
-    agent any
+    agent {
+        kubernetes {
+            yamlFile 'kubernetes/agent.yml'
+        }
+    }
 
     environment {
         ECR_REGISTRY = '309682544380.dkr.ecr.us-east-1.amazonaws.com'
@@ -17,31 +21,35 @@ pipeline {
         }
         stage('Instalar dependencias y construir') {
             steps {
-                sh 'php --version'
-                sh 'composer install'
-                sh 'composer --version'
-                sh 'cp .env.example .env'
-                sh 'php artisan key:generate'
+                container('docker-agent') {
+                    sh 'php --version'
+                    sh 'composer install'
+                    sh 'composer --version'
+                    sh 'cp .env.example .env'
+                    sh 'php artisan key:generate'
+                }
             }
         }
 
         stage('Reemplazar Imagen Tag') {
             steps {
-                script {
-                    def int mayor = 1 + APP_VERSION.toInteger() / 100
-                    def int minor = (int) (APP_VERSION.toInteger() / 10) % 10
-                    def int deployment = APP_VERSION.toInteger() % 10
-                    def String customTag = "${mayor}.${minor}.${deployment}"
+                container('jenkins-agent') {
+                    script {
+                        def int mayor = 1 + APP_VERSION.toInteger() / 100
+                        def int minor = (int) (APP_VERSION.toInteger() / 10) % 10
+                        def int deployment = APP_VERSION.toInteger() % 10
+                        def String customTag = "${mayor}.${minor}.${deployment}"
 
-                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AWS_CREDENTIALS', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-                        def manifest = ""
-                        manifest = sh(script: "aws ecr batch-get-image --repository-name ${ECR_REPO} --image-ids imageTag=latest --output text --query images[].imageManifest", returnStdout: true).trim()
-                        
-                        if(manifest && !manifest.isEmpty()) {
-                            sh "aws ecr put-image --repository-name ${ECR_REPO} --image-tag ${customTag} --image-manifest '${manifest}'"
-                            sh "aws ecr batch-delete-image --repository-name ${ECR_REPO} --image-ids imageTag=latest"
-                        } else {
-                            echo 'No existe el tag latest'
+                        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AWS_CREDENTIALS', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                            def manifest = ""
+                            manifest = sh(script: "aws ecr batch-get-image --repository-name ${ECR_REPO} --image-ids imageTag=latest --output text --query images[].imageManifest", returnStdout: true).trim()
+
+                            if(manifest && !manifest.isEmpty()) {
+                                sh "aws ecr put-image --repository-name ${ECR_REPO} --image-tag ${customTag} --image-manifest '${manifest}'"
+                                sh "aws ecr batch-delete-image --repository-name ${ECR_REPO} --image-ids imageTag=latest"
+                            } else {
+                                echo 'No existe el tag latest'
+                            }
                         }
                     }
                 }
@@ -50,16 +58,18 @@ pipeline {
 
         stage('Eliminar la antepenultima imagen') {
             steps {
-                script {
-                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AWS_CREDENTIALS', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-                        String images = ""
-                        images = sh(script: "aws ecr describe-images --repository-name ${ECR_REPO} --query 'reverse(sort_by(imageDetails, &imagePushedAt))[].imageDigest'", returnStatus: true)
-                        String imageToDelete = sh(script: "echo '${images}' | sed -n '2p' | tr -d ','", returnStatus: true)
+                container('jenkins-agent') {
+                    script {
+                        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AWS_CREDENTIALS', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                            String images = ""
+                            images = sh(script: "aws ecr describe-images --repository-name ${ECR_REPO} --query 'reverse(sort_by(imageDetails, &imagePushedAt))[].imageDigest'", returnStatus: true)
+                            String imageToDelete = sh(script: "echo '${images}' | sed -n '2p' | tr -d ','", returnStatus: true)
 
-                        if (imageToDelete && !imageToDelete.isEmpty()) {
-                            sh "aws ecr batch-delete-image --repository-name ${ECR_REPO} --image-ids imageDigest='${imageToDelete}'"
-                        } else {
-                            echo 'No se encontraron imágenes para eliminar.'
+                            if (imageToDelete && !imageToDelete.isEmpty()) {
+                                sh "aws ecr batch-delete-image --repository-name ${ECR_REPO} --image-ids imageDigest='${imageToDelete}'"
+                            } else {
+                                echo 'No se encontraron imágenes para eliminar.'
+                            }
                         }
                     }
                 }
@@ -68,11 +78,12 @@ pipeline {
 
         stage('Construir imagen y enviar al repositorio') {
             steps {
-                script {
-                    docker.build("${ECR_REGISTRY}/${ECR_REPO}:latest", '.')
-                    docker.withRegistry("https://${ECR_REGISTRY}", 'ecr:us-east-1:' + 'AWS_CREDENTIALS') {
-                        
-                        docker.image("${ECR_REGISTRY}/${ECR_REPO}:latest").push()
+                container('docker') {
+                    script {
+                        docker.build("${ECR_REGISTRY}/${ECR_REPO}:latest", '.')
+                        docker.withRegistry("https://${ECR_REGISTRY}", 'ecr:us-east-1:' + 'AWS_CREDENTIALS') {
+                            docker.image("${ECR_REGISTRY}/${ECR_REPO}:latest").push()
+                        }
                     }
                 }
             }
