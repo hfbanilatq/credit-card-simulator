@@ -69,7 +69,7 @@ pipeline {
         stage('Construir imagen y enviar al repositorio') {
             steps {
                 script {
-                    docker.withRegistry("https://${ECR_REGISTRY}", 'AwsCredentials') {
+                    docker.withRegistry("https://${ECR_REGISTRY}", 'ecr:us-east-1:AKIAUQGUET36PUFCKQVW') {
                         docker.build("${ECR_REGISTRY}/${ECR_REPO}:latest", '.')
                         docker.image("${ECR_REGISTRY}/${ECR_REPO}:latest").push()
                     }
