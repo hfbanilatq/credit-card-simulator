@@ -1,7 +1,7 @@
 /* groovylint-disable LineLength, NestedBlockDepth */
 pipeline {
     agent {
-        Kubernetes {
+        kubernetes {
             yamlFile 'kubernetes/agent.yml'
         }
     }
