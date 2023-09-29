@@ -91,8 +91,8 @@ pipeline {
         }
 
         stage('Desplegar en Kubernetes') {
-            container('jenkins-agent') {
-                steps {
+            steps {
+                container('jenkins-agent') {
                     sh "kubectl --kubeconfig=${KUBERNETES_ID} apply -f ${K8S_MANIFESTS_DIR}/"
                 }
             }
