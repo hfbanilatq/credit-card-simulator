@@ -94,13 +94,8 @@ pipeline {
             steps {
                 container('jenkins-agent') {
                     script {
-                        def credentials = 'KUBERNETES_ID'
-                        if (credentials != null) {
-                            withCredentials([credentials]) {
-                                sh "kubectl --kubeconfig=\$HOME/.kube/config --token=\$TOKEN --server=\$SERVER --insecure-skip-tls-verify=true apply -f ${K8S_MANIFESTS_DIR}"
-                            }
-                        } else {
-                            error "No se encontraron las credenciales"
+                        withCredentials(['KUBERNETES_ID']) {
+                            sh "kubectl --kubeconfig=\$HOME/.kube/config --token=\$TOKEN --server=\$SERVER --insecure-skip-tls-verify=true apply -f ${K8S_MANIFESTS_DIR}"
                         }
                     }
                 }
