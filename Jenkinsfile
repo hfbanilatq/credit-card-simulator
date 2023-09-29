@@ -63,9 +63,9 @@ pipeline {
                         withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AWS_CREDENTIALS', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
                             String images = ""
                             images = sh(script: "aws ecr describe-images --repository-name ${ECR_REPO} --query 'reverse(sort_by(imageDetails, &imagePushedAt))[].imageDigest'", returnStatus: true)
-                            String imageToDelete = sh(script: "echo '${images}' | sed -n '2p' | tr -d ','", returnStatus: true)
+                            String imageToDelete = sh(script: "echo '${images}' | sed -n '3p' | tr -d ','", returnStatus: true)
 
-                            if (imageToDelete && !imageToDelete.isEmpty()) {
+                            if (imageToDelete && !imageToDelete.isEmpty() && imageToDelete.contains("sha256")) {
                                 sh "aws ecr batch-delete-image --repository-name ${ECR_REPO} --image-ids imageDigest='${imageToDelete}'"
                             } else {
                                 echo 'No se encontraron imágenes para eliminar.'
