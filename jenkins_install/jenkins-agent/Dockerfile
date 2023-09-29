@@ -1,31 +1,58 @@
-FROM jenkins/inbound-agent:jdk11
+# Utiliza la imagen jenkins/jnlp-agent-docker como base
+FROM jenkins/jnlp-agent-docker:latest
 
+# Cambiar al usuario root para instalar paquetes
 USER root
 
-# install packages
-RUN apt-get -y update \
-    && apt-get -y upgrade \
-    && apt-get -y install sudo curl bash jq python3 python3-pip awscli
 
-#Instalar php y composer
+# Actualiza el índice de paquetes de Alpine y luego instala todas las herramientas
+RUN apk --no-cache update && \
+    apk --no-cache upgrade && \
+    apk --no-cache add \
+        sudo \
+        curl \
+        bash \
+        jq \
+        python3 \
+        py3-pip \
+        aws-cli 
+RUN apk add --no-cache php82 \
+    php82-common \
+    php82-fpm \
+    php82-pdo \
+    php82-opcache \
+    php82-zip \
+    php82-phar \
+    php82-iconv \
+    php82-cli \
+    php82-curl \
+    php82-openssl \
+    php82-mbstring \
+    php82-tokenizer \
+    php82-fileinfo \
+    php82-json \
+    php82-xml \
+    php82-xmlwriter \
+    php82-simplexml \
+    php82-dom \
+    php82-pdo_mysql \
+    php82-pdo_sqlite \
+    php82-tokenizer \
+    php82-pecl-redis
+RUN apk add --no-cache php82-gd nodejs npm
+RUN ln -s /usr/bin/php82 /usr/bin/php
 
-#Instalar php y composer
-RUN apt install php-cli -y
-RUN apt-get install php-dom -y
-RUN apt-get install php-dom -y
-RUN apt-get install php-curl -y
-RUN apt-get install php-gd -y
-RUN apt-get install php-bcmath -y
-RUN apt-get install php-cgi -y
-RUN apt-get install php-ldap -y
-RUN apt-get install php-mbstring -y
-RUN apt-get install php-soap -y
-RUN apt-get install php-zip -y
-RUN curl -sS https://getcomposer.org/installer -o /tmp/composer-setup.php
-RUN php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer
+RUN  curl -sS https://getcomposer.org/installer -o /tmp/composer-setup.php && \
+    php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer
+RUN rm -rf composer-setup.php
 
-RUN apt-get install -y nodejs
-RUN apt install npm -y
-RUN apt-get install php-xdebug -y
-RUN apt-get install php-sqlite3 -y
+# Copiar el script de entrada y establecer los permisos
+COPY entrypoint.sh /entrypoint.sh
+RUN chown jenkins:jenkins /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Cambiar de nuevo al usuario jenkins
 USER jenkins
+
+# Establecer el punto de entrada
+ENTRYPOINT ["/entrypoint.sh"]
