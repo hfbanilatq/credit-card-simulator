@@ -36,8 +36,13 @@ pipeline {
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AwsCredentials', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
                         def manifest = ""
                         manifest = sh(script: "aws ecr batch-get-image --repository-name ${ECR_REPO} --image-ids imageTag=latest --output text --query images[].imageManifest", returnStdout: true).trim()
-                        sh "aws ecr put-image --repository-name ${ECR_REPO} --image-tag ${customTag} --image-manifest '${manifest}'"
-                        sh "aws ecr batch-delete-image --repository-name ${ECR_REPO} --image-ids imageTag=latest"
+                        
+                        if(manifest && !manifest.isEmpty()) {
+                            sh "aws ecr put-image --repository-name ${ECR_REPO} --image-tag ${customTag} --image-manifest '${manifest}'"
+                            sh "aws ecr batch-delete-image --repository-name ${ECR_REPO} --image-ids imageTag=latest"
+                        } else {
+                            echo 'No existe el tag latest'
+                        }
                     }
                 }
             }
@@ -54,7 +59,7 @@ pipeline {
                         if (imageToDelete && !imageToDelete.isEmpty()) {
                             sh "aws ecr batch-delete-image --repository-name ${ECR_REPO} --image-ids imageDigest='${imageToDelete}'"
                         } else {
-                            echo "No se encontraron imágenes para eliminar."
+                            echo 'No se encontraron imágenes para eliminar.'
                         }
                     }
                 }
