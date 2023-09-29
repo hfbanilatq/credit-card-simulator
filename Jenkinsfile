@@ -93,7 +93,14 @@ pipeline {
         stage('Desplegar en Kubernetes') {
             steps {
                 container('jenkins-agent') {
-                    sh "kubectl --kubeconfig=${KUBERNETES_ID} apply -f ${K8S_MANIFESTS_DIR}/"
+                    def credentials = credentials('KUBERNETES_ID')
+                    if (credentials != null) {
+                        withCredentials([credentials]) {
+                            sh "kubectl --kubeconfig=\$HOME/.kube/config --token=\$TOKEN --server=\$SERVER --insecure-skip-tls-verify=true apply -f ${K8S_MANIFESTS_DIR}"
+                        }
+                    } else {
+                        error "No se encontraron las credenciales"
+                    }
                 }
             }
         }
