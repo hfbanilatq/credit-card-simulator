@@ -21,7 +21,7 @@ pipeline {
         }
         stage('Instalar dependencias y construir') {
             steps {
-                container('docker-agent') {
+                container('jenkins-agent') {
                     sh 'php --version'
                     sh 'composer install'
                     sh 'composer --version'
