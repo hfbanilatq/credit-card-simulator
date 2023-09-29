@@ -1,10 +1,6 @@
 /* groovylint-disable LineLength, NestedBlockDepth */
 pipeline {
-    agent {
-        kubernetes {
-            yamlFile 'kubernetes/agent.yml'
-        }
-    }
+    agent any
 
     environment {
         ECR_REGISTRY = '309682544380.dkr.ecr.us-east-1.amazonaws.com'
