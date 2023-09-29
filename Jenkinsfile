@@ -35,12 +35,6 @@ pipeline {
 
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AwsCredentials', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
                         def manifest = sh "aws ecr batch-get-image --repository-name ${ECR_REPO} --image-ids imageTag=latest --output text --query images[].imageManifest"
-                         sh "echo 'Cualquier cosa ${manifest}'"
-                         
-                         sh "manifiesto=$(aws ecr batch-get-image --repository-name ${ECR_REPO} --image-ids imageTag=latest --output text --query images[].imageManifest)"
-
-                       
-                        sh "echo 'Manifiesto $manifiesto"
                         sh "aws ecr put-image --repository-name ${ECR_REPO} --image-tag ${customTag} --image-manifest '${manifest}'"
                         sh "aws ecr batch-delete-image --repository-name ${ECR_REPO} --image-ids imageTag=latest"
                     }
