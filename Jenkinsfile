@@ -94,7 +94,8 @@ pipeline {
             steps {
                 container('jenkins-agent') {
                     script {
-                        withKubeConfig([credentialsId:'KUBERNETES_ID']) {
+                        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AWS_CREDENTIALS', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                            sh "aws eks update-kubeconfig --name jenkins-docker --alias jenkis-docker"
                             sh "kubectl apply -f ${K8S_MANIFESTS_DIR}"
                         }
                     }
