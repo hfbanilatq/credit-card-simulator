@@ -9,7 +9,7 @@ pipeline {
     environment {
         ECR_REGISTRY = '309682544380.dkr.ecr.us-east-1.amazonaws.com'
         ECR_REPO = 'credit-card-simulator'
-        K8S_MANIFESTS_DIR = 'kubernetes/Manifiesto.yml'
+        K8S_MANIFESTS_DIR = 'kubernetes/Manifiesto.yaml'
         APP_VERSION = "${env.BUILD_NUMBER}"
     }
 
@@ -35,7 +35,7 @@ pipeline {
             steps {
                 container('jenkins-agent') {
                     sh 'php artisan test'
-                    sh 'vendor/bin/phpstan analyze'
+                    sh 'vendor/bin/phpstan analyze' 
                 }
             }
         }
