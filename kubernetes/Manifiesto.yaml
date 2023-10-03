@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: credit-card-simulator-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: credit-card-simulator
+  template:
+    metadata:
+      labels:
+        app: credit-card-simulator
+    spec:
+      containers:
+      - name: credit-card-simulator
+        image: 309682544380.dkr.ecr.us-east-1.amazonaws.com/credit-card-simulator:latest
+        ports:
+        - containerPort: 80
+        env:
+        - name: DB_CONNECTION
+          value: "mysql"
+        - name: DB_HOST
+          value: "mysql-service"
+        - name: DB_DATABASE
+          value: "credit_card_simulator"
+        - name: DB_USERNAME
+          value: root
+        - name: DB_PASSWORD
+          valueFrom:
+              secretKeyRef:
+                name: mysql-secret
+                key: MYSQL_ROOT_PASSWORD
+      imagePullSecrets:
+      - name: ecr-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: credit-card-simulator-service
+spec:
+  selector:
+    app: credit-card-simulator
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+

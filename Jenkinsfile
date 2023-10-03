@@ -31,6 +31,15 @@ pipeline {
             }
         }
 
+        stage('Ejecutar pruebas unitarias y de integracion') {
+            steps {
+                container('jenkins-agent') {
+                    sh 'php artisan test'
+                    sh 'vendor/bin/phpstan analyze'
+                }
+            }
+        }
+
         stage('Reemplazar Imagen Tag') {
             steps {
                 container('jenkins-agent') {
