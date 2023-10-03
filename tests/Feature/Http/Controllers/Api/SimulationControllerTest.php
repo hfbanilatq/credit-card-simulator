@@ -35,6 +35,6 @@ class SimulationControllerTest extends TestCase
         $response = $this->json('POST', '/api/simulations/simulate', $simulationData);
 
         $response->assertStatus(200);
-        $this->assertCount(12, $response->json('monthlyFees'));
+        $this->assertCount(15, $response->json('monthlyFees'));
     }
 }
